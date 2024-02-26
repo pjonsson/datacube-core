@@ -228,7 +228,7 @@ class Datacube(object):
     #: pylint: disable=too-many-arguments, too-many-locals
     def load(self, product=None, measurements=None, output_crs=None, resolution=None, resampling=None,
              skip_broken_datasets=False, dask_chunks=None, like=None, fuse_func=None, align=None,
-             datasets=None, dataset_predicate=None, progress_cbk=None, patch_url=None, **query):
+             datasets=None, dataset_predicate=None, progress_cbk=None, patch_url=None, driver=None, **query):
         r"""
         Load data as an ``xarray.Dataset`` object.
         Each measurement will be a data variable in the :class:`xarray.Dataset`.
@@ -501,7 +501,8 @@ class Datacube(object):
                                 skip_broken_datasets=skip_broken_datasets,
                                 progress_cbk=progress_cbk,
                                 extra_dims=extra_dims,
-                                patch_url=patch_url)
+                                patch_url=patch_url,
+                                driver=driver)
 
         return result
 
@@ -844,6 +845,13 @@ class Datacube(object):
         .. seealso:: :meth:`find_datasets` :meth:`group_datasets`
         """
         measurements = per_band_load_data_settings(measurements, resampling=resampling, fuse_func=fuse_func)
+        if driver := extra.pop('driver', None):
+            from ..storage._loader import driver_based_load
+
+            return driver_based_load(driver, sources, geobox, measurements, dask_chunks,
+                                       skip_broken_datasets=skip_broken_datasets,
+                                       extra_dims=extra_dims,
+                                       patch_url=patch_url)
 
         if dask_chunks is not None:
             return Datacube._dask_load(sources, geobox, measurements, dask_chunks,
