@@ -173,6 +173,8 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
                 transaction.update_search_index(dsids=[dataset.id])
                 # 1c. Store locations
                 if dataset.uris is not None:
+                    if len(dataset.uris) > 1:
+                        raise ValueError('Postgis driver does not support multiple locations for a dataset.')
                     self._ensure_new_locations(dataset, transaction=transaction)
             if archive_less_mature is not None:
                 self.archive_less_mature(dataset, archive_less_mature)
@@ -207,26 +209,22 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
             spatial_indexes={crs: [] for crs in crses}
         )
         dsids = []
-        for prod, metadata_doc, uris in batch_ds:
+        for prod, metadata_doc, uri in batch_ds:
             dsid = UUID(str(metadata_doc["id"]))
             dsids.append(dsid)
+            if isinstance(uri, list):
+                uri = uri[0]
+            scheme, body = split_uri(uri)
             batch.datasets.append(
                 {
                     "id": dsid,
                     "product_ref": prod.id,
                     "metadata": metadata_doc,
-                    "metadata_type_ref": prod.metadata_type.id
+                    "metadata_type_ref": prod.metadata_type.id,
+                    "uri_scheme": scheme,
+                    "uri_body": body,
                 }
             )
-            for uri in uris:
-                scheme, body = split_uri(uri)
-                batch.uris.append(
-                    {
-                        "dataset_ref": dsid,
-                        "uri_scheme": scheme,
-                        "uri_body": body,
-                    }
-                )
             extent = extract_geometry_from_eo3_projection(
                 metadata_doc["grid_spatial"]["projection"]  # type: ignore[misc,call-overload,index]
             )
@@ -254,8 +252,6 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
         with self._db_connection(transaction=True) as connection:
             if batch.datasets:
                 b_added, b_skipped = connection.insert_dataset_bulk(batch.datasets)
-            if batch.uris:
-                connection.insert_dataset_location_bulk(batch.uris)
             for crs in crses:
                 crs_values = batch.spatial_indexes[crs]
                 if crs_values:
@@ -309,6 +305,9 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
                                                                                          dataset.product.name,
                                                                                          dataset.id))
 
+        if len(dataset.uris) > 1:
+            raise ValueError('Postgis driver does not support multiple locations for a dataset.')
+
         # TODO: figure out (un)safe changes from metadata type?
         allowed = {
             # can always add more metadata
@@ -331,11 +330,10 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
                delta in timestamp comparison
         :rtype: Dataset
         """
-        existing = self.get(dataset.id)
         can_update, safe_changes, unsafe_changes = self.can_update(dataset, updates_allowed)
 
         if not safe_changes and not unsafe_changes:
-            self._ensure_new_locations(dataset, existing)
+            self._ensure_new_locations(dataset)
             _LOG.info("No changes detected for dataset %s", dataset.id)
             return dataset
 
@@ -364,31 +362,16 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
             if archive_less_mature is not None:
                 self.archive_less_mature(dataset, archive_less_mature)
 
-        self._ensure_new_locations(dataset, existing)
+        self._ensure_new_locations(dataset)
 
         return dataset
 
-    def _ensure_new_locations(self, dataset, existing=None, transaction=None):
-        old_uris = set()
-        if existing:
-            old_uris.update(existing._uris)
-        new_uris = dataset._uris
-
-        def ensure_locations_in_transaction(old_uris, new_uris, transaction):
-            if len(old_uris) <= 1 and len(new_uris) == 1:
-                # Only one location, so treat as an update.
-                if len(old_uris):
-                    transaction.remove_location(dataset.id, old_uris.pop())
-                transaction.insert_dataset_location(dataset.id, new_uris[0])
-            else:
-                for uri in new_uris[::-1]:
-                    transaction.insert_dataset_location(dataset.id, uri)
-
+    def _ensure_new_locations(self, dataset, transaction=None):
         if transaction:
-            ensure_locations_in_transaction(old_uris, new_uris, transaction)
+            transaction.insert_dataset_location(dataset.id, dataset.uri)
         else:
             with self._db_connection(transaction=True) as tr:
-                ensure_locations_in_transaction(old_uris, new_uris, tr)
+                tr.insert_dataset_location(dataset.id, dataset.uri)
 
     def archive(self, ids):
         """
@@ -457,8 +440,7 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
         :param typing.Union[UUID, str] id_: dataset id
         :rtype: list[str]
         """
-        with self._db_connection() as connection:
-            return connection.get_locations(id_)
+        return [self.get_location(id_)]
 
     def get_location(self, id_):
         """
@@ -468,9 +450,9 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
         :rtype: list[str]
         """
         with self._db_connection() as connection:
-            locations = connection.get_locations(id_)
-            if locations:
-                return locations[0]
+            location = connection.get_location(id_)
+            if location:
+                return location[0]
             else:
                 return None
 
@@ -487,8 +469,7 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
         :param typing.Union[UUID, str] id_: dataset id
         :rtype: list[str]
         """
-        with self._db_connection() as connection:
-            return [uri for uri, archived_dt in connection.get_archived_locations(id_)]
+        return []
 
     @deprecat(
         reason="Multiple locations per dataset are now deprecated. "
@@ -503,8 +484,7 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
         :param typing.Union[UUID, str] id_: dataset id
         :rtype: list[Tuple[str, datetime.datetime]]
         """
-        with self._db_connection() as connection:
-            return list(connection.get_archived_locations(id_))
+        return []
 
     @deprecat(
         reason="Multiple locations per dataset are now deprecated. "
@@ -523,6 +503,13 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
         if not uri:
             warnings.warn("Cannot add empty uri. (dataset %s)" % id_)
             return False
+
+        existing = self.get_location(id_)
+        if existing == uri:
+            warnings.warn(f"Dataset {id_} already has uri {uri}")
+            return False
+        elif existing is not None and existing != uri:
+            raise ValueError("Postgis index does not support multiple dataset locations.")
 
         with self._db_connection() as connection:
             return connection.insert_dataset_location(id_, uri)
@@ -557,8 +544,7 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
             return was_removed
 
     @deprecat(
-        reason="Multiple locations per dataset are now deprecated. "
-               "Archived locations may not be accessible in future releases. "
+        reason="The PostGIS index does not support archived locations. "
                "Dataset location can be set or updated with the update() method.",
         version="1.9.0",
         category=ODC2DeprecationWarning
@@ -571,13 +557,10 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
         :param str uri: fully qualified uri
         :return bool: location was able to be archived
         """
-        with self._db_connection() as connection:
-            was_archived = connection.archive_location(id_, uri)
-            return was_archived
+        return False
 
     @deprecat(
-        reason="Multiple locations per dataset are now deprecated. "
-               "Archived locations may not be restorable in future releases. "
+        reason="The PostGIS index does not support archived locations. "
                "Dataset location can be set or updated with the update() method.",
         version="1.9.0",
         category=ODC2DeprecationWarning
@@ -590,9 +573,7 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
         :param str uri: fully qualified uri
         :return bool: location was able to be restored
         """
-        with self._db_connection() as connection:
-            was_restored = connection.restore_location(id_, uri)
-            return was_restored
+        return False
 
     def _make(self, dataset_res, full_info=False, product=None,
               source_tree: LineageTree | None = None,
@@ -605,12 +586,8 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
         kwargs = {}
         if not isinstance(dataset_res, dict):
             dataset_res = dataset_res._asdict()
-        if "uris" in dataset_res:
-            uris = [uri for uri in dataset_res["uris"] if uri]
-            if len(uris) == 1:
-                kwargs["uri"] = uris[0]
-            else:
-                kwargs["uris"] = uris
+        if "uri" in dataset_res:
+            kwargs["uri"] = dataset_res["uri"]
 
         return Dataset(
             product=product or self.products.get(dataset_res["product_id"]),

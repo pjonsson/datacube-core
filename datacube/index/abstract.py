@@ -1085,7 +1085,7 @@ class DatasetTuple(NamedTuple):
     A named tuple representing a complete dataset:
     - product: A Product model.
     - metadata: The dataset metadata document
-    - uris: A list of locations (uris)
+    - uri_: The dataset location or list of locations
     """
     product: Product
     metadata: JsonDict

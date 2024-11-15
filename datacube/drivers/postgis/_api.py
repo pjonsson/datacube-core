@@ -45,8 +45,7 @@ from datacube.model.lineage import LineageRelation, LineageDirection
 from . import _core
 from ._fields import parse_fields, Expression, PgField, PgExpression, DateRangeDocField  # noqa: F401
 from ._fields import NativeField, DateDocField, SimpleDocField, UnindexableValue
-from ._schema import MetadataType, Product, \
-    Dataset, DatasetLineage, DatasetLocation, SelectedDatasetLocation, \
+from ._schema import MetadataType, Product, Dataset, DatasetLineage, \
     search_field_index_map, search_field_indexes, DatasetHome
 from ._spatial import geom_alchemy, generate_dataset_spatial_values, extract_geometry_from_eo3_projection
 from .sql import escape_pg_identifier
@@ -67,24 +66,6 @@ def _base_known_fields():
         'Archived date',
         Dataset.archived
     )
-    fields["uris"] = NativeField(
-        "uris",
-        "all uris",
-        func.array(
-            select(
-                SelectedDatasetLocation.uri
-            ).where(
-                and_(
-                    SelectedDatasetLocation.dataset_ref == Dataset.id,
-                    SelectedDatasetLocation.archived == None
-                )
-            ).order_by(
-                SelectedDatasetLocation.added.desc(),
-                SelectedDatasetLocation.id.desc()
-            ).label('uris')
-        ),
-        alchemy_table=Dataset.__table__  # type: ignore[attr-defined]
-    )
     return fields
 
 
@@ -102,23 +83,7 @@ def _dataset_fields() -> tuple:
             'Archived date',
             Dataset.archived
         ),
-        NativeField("uris",
-                    "all uris",
-                    func.array(
-                        select(
-                            SelectedDatasetLocation.uri
-                        ).where(
-                            and_(
-                                SelectedDatasetLocation.dataset_ref == Dataset.id,
-                                SelectedDatasetLocation.archived == None
-                            )
-                        ).order_by(
-                            SelectedDatasetLocation.added.desc(),
-                            SelectedDatasetLocation.id.desc()
-                        ).label('uris')
-                    ),
-                    alchemy_table=Dataset.__table__  # type: ignore[attr-defined]
-        )
+        native_flds["uri"]
     )
 
 
@@ -126,20 +91,21 @@ def _dataset_bulk_select_fields() -> tuple:
     return (
         Dataset.product_ref,
         Dataset.metadata_doc,
-        # All active URIs, from newest to oldest
-        func.array(
-            select(
-                SelectedDatasetLocation.uri
-            ).where(
-                and_(
-                    SelectedDatasetLocation.dataset_ref == Dataset.id,
-                    SelectedDatasetLocation.archived == None
-                )
-            ).order_by(
-                SelectedDatasetLocation.added.desc(),
-                SelectedDatasetLocation.id.desc()
-            ).label('uris')
-        ).label('uris')
+        Dataset.uri
+        # # All active URIs, from newest to oldest
+        # func.array(
+        #     select(
+        #         SelectedDatasetLocation.uri
+        #     ).where(
+        #         and_(
+        #             SelectedDatasetLocation.dataset_ref == Dataset.id,
+        #             SelectedDatasetLocation.archived == None
+        #         )
+        #     ).order_by(
+        #         SelectedDatasetLocation.added.desc(),
+        #         SelectedDatasetLocation.id.desc()
+        #     ).label('uris')
+        # ).label('uris')
     )
 
 
@@ -195,9 +161,8 @@ def get_native_fields() -> dict[str, NativeField]:
         'uri': NativeField(
             'uri',
             "Dataset URI",
-            DatasetLocation.uri_body,
-            alchemy_expression=DatasetLocation.uri,
-            join_clause=(DatasetLocation.dataset_ref == Dataset.id),
+            Dataset.uri_body,
+            alchemy_expression=Dataset.uri,
             affects_row_selection=True
         ),
     }
@@ -396,21 +361,15 @@ class PostgisDbAPI:
         scheme, body = split_uri(uri)
 
         r = self._connection.execute(
-            insert(DatasetLocation).on_conflict_do_nothing(
-                index_elements=['uri_scheme', 'uri_body', 'dataset_ref']
+            update(Dataset).returning(Dataset.uri).where(
+                Dataset.id == dataset_id
             ).values(
-                dataset_ref=dataset_id,
                 uri_scheme=scheme,
-                uri_body=body,
+                uri_body=body
             )
         )
 
         return r.rowcount > 0
-
-    def insert_dataset_location_bulk(self, values):
-        requested = len(values)
-        res = self._connection.execute(insert(DatasetLocation), values)
-        return res.rowcount, requested - res.rowcount
 
     def insert_dataset_search(self, search_table, dataset_id, key, value):
         """
@@ -524,19 +483,17 @@ class PostgisDbAPI:
             mode = 'exact' if body.count('#') > 0 else 'prefix'
 
         if mode == 'exact':
-            body_query = DatasetLocation.uri_body == body
+            body_query = Dataset.uri_body == body
         elif mode == 'prefix':
-            body_query = DatasetLocation.uri_body.startswith(body)
+            body_query = Dataset.uri_body.startswith(body)
         else:
             raise ValueError('Unsupported query mode {}'.format(mode))
 
         return self._connection.execute(
             select(
                 *_dataset_select_fields()
-            ).join(
-                Dataset.locations
             ).where(
-                and_(DatasetLocation.uri_scheme == scheme, body_query)
+                and_(Dataset.uri_scheme == scheme, body_query)
             )
         ).fetchall()
 
@@ -575,11 +532,11 @@ class PostgisDbAPI:
         return r.rowcount > 0
 
     def delete_dataset(self, dataset_id):
-        self._connection.execute(
-            delete(DatasetLocation).where(
-                DatasetLocation.dataset_ref == dataset_id
-            )
-        )
+        # self._connection.execute(
+        #     delete(DatasetLocation).where(
+        #         DatasetLocation.dataset_ref == dataset_id
+        #     )
+        # )
         for table in search_field_indexes.values():
             self._connection.execute(
                 delete(table).where(table.dataset_ref == dataset_id)
@@ -1256,90 +1213,30 @@ class PostgisDbAPI:
         for r in self._connection.execute(select(MetadataType.definition).order_by(MetadataType.name.asc())):
             yield r[0]
 
-    def get_locations(self, dataset_id):
-        return [
-            record[0]
-            for record in self._connection.execute(
-                select(
-                    DatasetLocation.uri
-                ).where(
-                    DatasetLocation.dataset_ref == dataset_id
-                ).where(
-                    DatasetLocation.archived == None
-                ).order_by(
-                    DatasetLocation.added.desc(),
-                    DatasetLocation.id.desc()
-                )
-            ).fetchall()
-        ]
-
-    def get_archived_locations(self, dataset_id):
-        """
-        Return a list of uris and archived_times for a dataset
-        """
-        return [
-            (location_uri, archived_time)
-            for location_uri, archived_time in self._connection.execute(
-                select(
-                    DatasetLocation.uri, DatasetLocation.archived
-                ).where(
-                    DatasetLocation.dataset_ref == dataset_id
-                ).where(
-                    DatasetLocation.archived != None
-                ).order_by(
-                    DatasetLocation.added.desc()
-                )
-            ).fetchall()
-        ]
+    def get_location(self, dataset_id):
+        return self._connection.execute(
+            select(Dataset.uri).where(
+                Dataset.id == dataset_id
+            )
+        ).first()
 
     def remove_location(self, dataset_id, uri):
         """
-        Remove the given location for a dataset
+        Remove a dataset's location
 
         :returns bool: Was the location deleted?
         """
         scheme, body = split_uri(uri)
         res = self._connection.execute(
-            delete(DatasetLocation).where(
-                DatasetLocation.dataset_ref == dataset_id
-            ).where(
-                DatasetLocation.uri_scheme == scheme
-            ).where(
-                DatasetLocation.uri_body == body
-            )
-        )
-        return res.rowcount > 0
-
-    def archive_location(self, dataset_id, uri):
-        scheme, body = split_uri(uri)
-        res = self._connection.execute(
-            update(DatasetLocation).where(
-                DatasetLocation.dataset_ref == dataset_id
-            ).where(
-                DatasetLocation.uri_scheme == scheme
-            ).where(
-                DatasetLocation.uri_body == body
-            ).where(
-                DatasetLocation.archived == None
+            update(Dataset).where(
+                and_(
+                    Dataset.id == dataset_id,
+                    Dataset.uri_scheme == scheme,
+                    Dataset.uri_body == body
+                )
             ).values(
-                archived=func.now()
-            )
-        )
-        return res.rowcount > 0
-
-    def restore_location(self, dataset_id, uri):
-        scheme, body = split_uri(uri)
-        res = self._connection.execute(
-            update(DatasetLocation).where(
-                DatasetLocation.dataset_ref == dataset_id
-            ).where(
-                DatasetLocation.uri_scheme == scheme
-            ).where(
-                DatasetLocation.uri_body == body
-            ).where(
-                DatasetLocation.archived != None
-            ).values(
-                archived=None
+                uri_scheme=None,
+                uri_body=None
             )
         )
         return res.rowcount > 0
