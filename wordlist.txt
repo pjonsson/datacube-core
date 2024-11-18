@@ -4,6 +4,7 @@ AbstractProductResource
 AbstractReaderDriver
 AbstractWriterDriver
 acca
+accessor
 Affine
 affine
 africa
@@ -39,6 +40,7 @@ autoselectionlabel
 autosummary
 auxuser
 aws
+backend
 backends
 backported
 backquote
@@ -124,6 +126,7 @@ DatasetTypeResource
 DataSource
 datasource
 datetime
+dbs
 dea
 deafrica
 dem
@@ -166,7 +169,7 @@ EPSG
 epsg
 ESPA
 ESRI
-evironments
+executor
 f'file
 fd
 feedstock
@@ -205,6 +208,7 @@ GeoTiff
 geotiff
 GeoTIFFs
 GeoTiffs
+gg
 gh
 GHA
 GIS
@@ -221,6 +225,7 @@ gridWorkflow
 GroupBy
 HDF
 hdf
+hhBQVas
 hl
 hoc
 hostname
@@ -285,6 +290,7 @@ libyaml
 linux
 literalinclude
 localhost
+logoColor
 lon
 lonlat
 lr
@@ -396,10 +402,12 @@ pre
 precollection
 prefetch
 PRIMEM
+PRs
 prog
 Proj
 provence
 psql
+psycopg
 pts
 pwd
 px

@@ -8,6 +8,8 @@ What's New
 v1.9.next
 =========
 
+- Remove multiple location support from postgis driver. (:pull:`1658`)
+
 v1.9.0-rc11 (28th October 2024)
 ===============================
 
