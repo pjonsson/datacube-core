@@ -92,20 +92,6 @@ def _dataset_bulk_select_fields() -> tuple:
         Dataset.product_ref,
         Dataset.metadata_doc,
         Dataset.uri
-        # # All active URIs, from newest to oldest
-        # func.array(
-        #     select(
-        #         SelectedDatasetLocation.uri
-        #     ).where(
-        #         and_(
-        #             SelectedDatasetLocation.dataset_ref == Dataset.id,
-        #             SelectedDatasetLocation.archived == None
-        #         )
-        #     ).order_by(
-        #         SelectedDatasetLocation.added.desc(),
-        #         SelectedDatasetLocation.id.desc()
-        #     ).label('uris')
-        # ).label('uris')
     )
 
 
@@ -527,11 +513,6 @@ class PostgisDbAPI:
         return r.rowcount > 0
 
     def delete_dataset(self, dataset_id):
-        # self._connection.execute(
-        #     delete(DatasetLocation).where(
-        #         DatasetLocation.dataset_ref == dataset_id
-        #     )
-        # )
         for table in search_field_indexes.values():
             self._connection.execute(
                 delete(table).where(table.dataset_ref == dataset_id)
