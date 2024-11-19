@@ -172,7 +172,7 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
                 transaction.update_spindex(dsids=[dataset.id])
                 transaction.update_search_index(dsids=[dataset.id])
                 # 1c. Store locations
-                if dataset.uris is not None:
+                if dataset.uri is not None:
                     if len(dataset.uris) > 1:
                         raise ValueError('Postgis driver does not support multiple locations for a dataset.')
                     self._ensure_new_locations(dataset, transaction=transaction)

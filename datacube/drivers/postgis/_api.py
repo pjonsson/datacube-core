@@ -154,16 +154,11 @@ def get_native_fields() -> dict[str, NativeField]:
             'Full metadata document',
             Dataset.metadata_doc
         ),
-        # Fields that can affect row selection
-
-        # Note that this field is a single uri: selecting it will result in one-result per uri.
-        # (ie. duplicate datasets if multiple uris, no dataset if no uris)
         'uri': NativeField(
             'uri',
             "Dataset URI",
             Dataset.uri_body,
             alchemy_expression=Dataset.uri,
-            affects_row_selection=True
         ),
     }
     return fields

@@ -510,7 +510,7 @@ def test_search_returning_rows_eo3(index,
                                    ls8_eo3_dataset, ls8_eo3_dataset2):
     dataset = ls8_eo3_dataset
     uri = eo3_ls8_dataset_doc[1]
-    uri3 = eo3_ls8_dataset2_doc[1]
+    uri2 = eo3_ls8_dataset2_doc[1]
     results = list(index.datasets.search_returning(
         ('id', 'uri'),
         platform='landsat-8',
@@ -545,11 +545,48 @@ def test_search_returning_rows_eo3(index,
     assert len(results) == 1
     assert 1.31 < results[0].cloud_shadow < 1.32
 
-    index.datasets.archive_location(dataset.id, uri)  # Test of deprecated method
-    index.datasets.remove_location(dataset.id, uri)  # Test of deprecated method
+    # A second dataset already has a location:
+    results = set(index.datasets.search_returning(
+        ('id', 'uri'),
+        platform='landsat-8',
+        dataset_maturity='final',
+    ))
+    assert len(results) == 2
+    assert results == {
+        (dataset.id, uri),
+        (ls8_eo3_dataset2.id, uri2),
+    }
+
+
+@pytest.mark.parametrize('datacube_env_name', ('experimental', ))
+def test_search_returning_uri(index, eo3_ls8_dataset_doc,
+                              ls8_eo3_dataset):
+    dataset = ls8_eo3_dataset
+    uri = eo3_ls8_dataset_doc[1]
+
+    # If returning a field like uri, there will be one result per dataset.
+    index.datasets.remove_location(dataset.id, uri)  # deprecated method
+    results = list(index.datasets.search_returning(
+        ('id', 'uri'),
+        platform='landsat-8',
+        instrument='OLI_TIRS',
+    ))
+    assert len(results) == 1
+
+
+@pytest.mark.parametrize('datacube_env_name', ('datacube', ))
+def test_search_returning_uris_legacy(index,
+                                      eo3_ls8_dataset_doc,
+                                      eo3_ls8_dataset2_doc,
+                                      ls8_eo3_dataset, ls8_eo3_dataset2):
+    dataset = ls8_eo3_dataset
+    uri = eo3_ls8_dataset_doc[1]
+    uri3 = eo3_ls8_dataset2_doc[1]
 
     # If returning a field like uri, there will be one result per location.
     # No locations
+    index.datasets.archive_location(dataset.id, uri)
+    index.datasets.remove_location(dataset.id, uri)
     results = list(index.datasets.search_returning(
         ('id', 'uri'),
         platform='landsat-8',
@@ -558,9 +595,9 @@ def test_search_returning_rows_eo3(index,
     assert len(results) == 0
 
     # Add a second location and we should get two results
-    index.datasets.add_location(dataset.id, uri)  # Test of deprecated method
+    index.datasets.add_location(dataset.id, uri)
     uri2 = 'file:///tmp/test2'
-    index.datasets.add_location(dataset.id, uri2)  # Test of deprecated method
+    index.datasets.add_location(dataset.id, uri2)
     results = set(index.datasets.search_returning(
         ('id', 'uri'),
         platform='landsat-8',
@@ -855,8 +892,6 @@ def test_cli_info_eo3(index: Index,
     """
     Search datasets using the cli.
     """
-    index.datasets.add_location(ls8_eo3_dataset.id, 'file:///tmp/location1')  # Test deprecated method
-
     opts = [
         'dataset', 'info', str(ls8_eo3_dataset.id)
     ]
@@ -877,7 +912,7 @@ def test_cli_info_eo3(index: Index,
         "id: " + str(ls8_eo3_dataset.id),
         'product: ga_ls8c_ard_3',
         'status: active',
-        'location: file:///tmp/location1',
+        'location: ' + str(ls8_eo3_dataset.uri),
         'fields:',
         '    creation_time: 2019-10-07 20:19:19.218290',
         '    format: GeoTIFF',

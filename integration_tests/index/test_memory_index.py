@@ -707,6 +707,7 @@ def test_default_clone_bulk_ops(mem_index_fresh: Datacube, index, extended_eo3_m
     assert mem_index_fresh.index.datasets.has(ls8_eo3_dataset4.id)
 
 
+@pytest.mark.parametrize('datacube_env_name', ('datacube', ))
 def test_default_clone_bulk_ops_multiloc(
         mem_index_fresh: Datacube, index, extended_eo3_metadata_type,
         ls8_eo3_product, wo_eo3_product, africa_s2_eo3_product,
