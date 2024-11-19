@@ -223,6 +223,8 @@ class DatasetResource(AbstractDatasetResource, IndexResourceAddIn):
                     "metadata_type_ref": prod.metadata_type.id
                 }
             )
+            if isinstance(uris, str):
+                uris = [uris]
             for uri in uris:
                 scheme, body = split_uri(uri)
                 batch["uris"].append(
