@@ -130,7 +130,6 @@ def ensure_db(engine, with_permissions=True):
             grant select on all tables in schema {SCHEMA_NAME} to odc_user;
 
             grant insert on {SCHEMA_NAME}.dataset,
-                            {SCHEMA_NAME}.location,
                             {SCHEMA_NAME}.dataset_lineage to odc_manage;
             grant usage, select on all sequences in schema {SCHEMA_NAME} to odc_manage;
 

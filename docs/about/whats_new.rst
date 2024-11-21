@@ -8,6 +8,8 @@ What's New
 v1.9.next
 =========
 
+- Remove multiple location support from postgis driver. (:pull:`1658`)
+- Remove unnecessary logic copied from eodatasets3 (:pull:`1658`)
 * Documentation fixes (:pull:`1659`)
 * Don't use importlib_metadata (:pull:`1657`)
 * Pin upstream libraries to get CI tests running with numpy2 (:pull:`1661`)

@@ -10,10 +10,10 @@ import logging
 from typing import Type
 
 from sqlalchemy.dialects.postgresql import NUMRANGE, TSTZRANGE
-from sqlalchemy.orm import aliased, registry, relationship, column_property
-from sqlalchemy import ForeignKey, UniqueConstraint, PrimaryKeyConstraint, CheckConstraint, SmallInteger, Text, Index, \
+from sqlalchemy.orm import registry, relationship, column_property
+from sqlalchemy import ForeignKey, PrimaryKeyConstraint, CheckConstraint, SmallInteger, Text, Index, \
     literal
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, String, DateTime
 from sqlalchemy.dialects import postgresql as postgres
 from sqlalchemy.sql import func
 
@@ -105,40 +105,8 @@ class Dataset:
     updated = Column(DateTime(timezone=True), server_default=func.now(), nullable=False,
                      index=True, comment="when last updated")
 
-    locations = relationship("DatasetLocation", viewonly=True)
-    active_locations = relationship("DatasetLocation",
-                                    primaryjoin="and_(Dataset.id==DatasetLocation.dataset_ref, "
-                                                "DatasetLocation.archived==None)",
-                                    viewonly=True,
-                                    order_by="desc(DatasetLocation.added)")
-    archived_locations = relationship("DatasetLocation",
-                                      viewonly=True,
-                                      primaryjoin="and_(Dataset.id==DatasetLocation.dataset_ref, "
-                                                  "DatasetLocation.archived!=None)"
-                                     )
-
-
-Index("ix_ds_prod_active", Dataset.product_ref, postgresql_where=(Dataset.archived == None))
-Index("ix_ds_mdt_active", Dataset.metadata_type_ref, postgresql_where=(Dataset.archived == None))
-
-
-@orm_registry.mapped
-class DatasetLocation:
-    __tablename__ = "location"
-    __table_args__ = (
-        _core.METADATA,
-        UniqueConstraint('uri_scheme', 'uri_body', 'dataset_ref'),
-        Index("ix_loc_ds_added", "dataset_ref", "added"),
-        {
-            "schema": sql.SCHEMA_NAME,
-            "comment": "Where data for the dataset can be found (uri)."
-        }
-    )
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    dataset_ref = Column(postgres.UUID(as_uuid=True), ForeignKey(Dataset.id), nullable=False,
-                         comment="The product this dataset belongs to")
-    uri_scheme = Column(String, nullable=False, comment="The scheme of the uri.")
-    uri_body = Column(String, nullable=False, comment="""The body of the uri.
+    uri_scheme = Column(String, comment="The scheme of the uri.")
+    uri_body = Column(String, comment="""The body of the uri.
 
 The uri scheme and body make up the base URI to find the dataset.
 
@@ -147,15 +115,11 @@ All paths in the dataset metadata can be computed relative to this.
 
 eg 'file:///g/data/datasets/LS8_NBAR/odc-metadata.yaml' or 'ftp://eo.something.com/dataset'
 'file' is a scheme, '///g/data/datasets/LS8_NBAR/odc-metadata.yaml' is a body.""")
-    added = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, comment="when added")
-    added_by = Column(Text, server_default=func.current_user(), nullable=False, comment="added by whom")
-    archived = Column(DateTime(timezone=True), default=None, nullable=True, index=True,
-                      comment="when archived, null for the active location")
     uri = column_property(uri_scheme + literal(':') + uri_body)
-    dataset = relationship("Dataset")
 
 
-SelectedDatasetLocation = aliased(DatasetLocation, name="sel_loc")
+Index("ix_ds_prod_active", Dataset.product_ref, postgresql_where=(Dataset.archived == None))
+Index("ix_ds_mdt_active", Dataset.metadata_type_ref, postgresql_where=(Dataset.archived == None))
 
 
 @orm_registry.mapped
@@ -329,7 +293,7 @@ search_field_index_map = {
 
 ALL_STATIC_TABLES = [
     MetadataType.__table__, Product.__table__,  # type: ignore[attr-defined]
-    Dataset.__table__, DatasetLocation.__table__,  # type: ignore[attr-defined]
+    Dataset.__table__,  # type: ignore[attr-defined]
     DatasetLineage.__table__, DatasetHome.__table__,  # type: ignore[attr-defined]
     SpatialIndexRecord.__table__,  # type: ignore[attr-defined]
     DatasetSearchString.__table__, DatasetSearchNumeric.__table__,  # type: ignore[attr-defined]
