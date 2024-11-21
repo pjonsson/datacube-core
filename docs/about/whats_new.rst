@@ -10,6 +10,11 @@ v1.9.next
 
 - Remove multiple location support from postgis driver. (:pull:`1658`)
 - Remove unnecessary logic copied from eodatasets3 (:pull:`1658`)
+* Documentation fixes (:pull:`1659`)
+* Don't use importlib_metadata (:pull:`1657`)
+* Pin upstream libraries to get CI tests running with numpy2 (:pull:`1661`)
+* Calculate spatial extent in epsg:4326 and reproject when no dedicated spatial extent for
+  the requested CRS is available (:pull:`1662`)
 
 v1.9.0-rc11 (28th October 2024)
 ===============================
@@ -1126,7 +1131,7 @@ v1.1.10 Rabid Rabbit (5 October 2016)
   - Metadata type name is now used as primary key when adding products.
     This allows easy migration of products from one database to another
 
-  - :meth:`.DatasetResource.has` now takes dataset id insted of :class:`.model.Dataset`
+  - :meth:`.DatasetResource.has` now takes dataset id instead of :class:`.model.Dataset`
 
   - Fixed an issues where database connections weren't recycled fast enough in some cases
 
