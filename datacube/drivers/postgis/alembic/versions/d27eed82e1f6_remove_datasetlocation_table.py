@@ -35,15 +35,17 @@ def upgrade() -> None:
                   schema="odc")
     # select first active location from DatasetLocation and insert into Dataset
     conn = op.get_bind()
-    conn.execute("""UPDATE odc.dataset d
-       SET d.uri_scheme=(
-           SELECT l.uri_scheme FROM odc.location l
-           WHERE l.dataset_ref=d.id AND archived IS NULL
-           ORDER BY added LIMIT 1),
-        d.uri_body=(
-            SELECT l.uri_body FROM odc.location l
-            WHERE l.dataset_ref=d.id AND archived IS NULL
-            ORDER BY added LIMIT 1)""")
+    conn.execute(
+        sa.text("""UPDATE odc.dataset d
+                SET d.uri_scheme=(
+                    SELECT l.uri_scheme FROM odc.location l
+                    WHERE l.dataset_ref=d.id AND archived IS NULL
+                    ORDER BY added LIMIT 1),
+                d.uri_body=(
+                    SELECT l.uri_body FROM odc.location l
+                    WHERE l.dataset_ref=d.id AND archived IS NULL
+                    ORDER BY added LIMIT 1)""")
+    )
 
     op.drop_table("location", schema="odc", if_exists=True)
 
