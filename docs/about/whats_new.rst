@@ -166,11 +166,16 @@ v1.9.0-rc1 (27th March 2024)
 v1.8.next
 =========
 - Don't error when adding a dataset whose product doesn't have an id value (:pull:`1630`)
+- Update docs (:pull:`1631`,:pull:`1651`)
+- Update docker image and CI (multiple PRs)
+- Pin out bad versions of dask (:pull:`1663`)
+- Ensure correct boundary scalar precision with numpy 2 (:pull:`1673`)
+- Add more string representations of nan (:pull:`1678`)
 
 v1.8.19 (2nd July 2024)
 =======================
 
-- Update whats_new for 1.8.19 release (:pull:`1612`)
+- Update whats_new.rst for 1.8.19 release (:pull:`1612`)
 - Always write floating point bands to cogs with nodata=nan for ESRI and GDAL compatibility (:pull:`1602`)
 - Add deprecation warning for config environment names that will not be supported in 1.9 (:pull:`1592`)
 - Update docker image to GDAL 3.9/Python 3.12/Ubuntu 24.04 (:pull:`1587`)
@@ -194,7 +199,6 @@ v1.8.18 (27th March 2024)
   instead of assuming it to be seconds since epoch (:pull:`1561`)
 - Add generic NOT operator and for ODC queries and ``Not`` type wrapper (:pull:`1563`)
 - Update whats_new.rst for release (:pull:`1568`)
-
 
 v1.8.17 (8th November 2023)
 ===========================
