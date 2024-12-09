@@ -19,7 +19,6 @@ v1.9.next
 * Fix broken documentation build (:pull:`1668`)
 * Rename `DatasetType` to `Product` in all the tests (:pull:`1671`)
 * Documentation updates for 1.9 release (:pull:`1664`, :pull:`1699`)
-* Fix metadata issues with new Lineage API. (:pull:`1677`)
 * Fix metadata issues with new Lineage API. (:pull:`1679`)
 * Suppress annoying config warning when configuring by environment variable (:pull:`1680`)
 * Suppress internal deprecation warnings when running tests against deprecated code (:pull:`1681`)
@@ -165,9 +164,14 @@ v1.9.0-rc1 (27th March 2024)
 
 v1.8.next
 =========
+
+v1.8.20 (9th December 2024)
+===========================
+- Update docker image and CI (:pull:`1624`, :pull:`1625`, :pull:`1626`, :pull:`1639`, :pull:`1641`, :pull:`1642`)
+- Update Slack links to Discord (:pull:`1620`)
+- Automatic updates of upstream library/image versions (:pull:`1629`, :pull:`1644`, :pull:`1653`, :pull:`1660`)
 - Don't error when adding a dataset whose product doesn't have an id value (:pull:`1630`)
 - Update docs (:pull:`1631`,:pull:`1651`)
-- Update docker image and CI (multiple PRs)
 - Pin out bad versions of dask (:pull:`1663`)
 - Ensure correct boundary scalar precision with numpy 2 (:pull:`1673`)
 - Add more string representations of nan (:pull:`1678`)
