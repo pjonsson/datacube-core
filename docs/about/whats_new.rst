@@ -8,21 +8,26 @@ What's New
 v1.9.next
 =========
 
-- Remove multiple location support from postgis driver. (:pull:`1658`)
-- Remove unnecessary logic copied from eodatasets3 (:pull:`1658`)
-* Documentation fixes (:pull:`1659`)
-* Don't use importlib_metadata (:pull:`1657`)
-* Pin upstream libraries to get CI tests running with numpy2 (:pull:`1661`)
-* Calculate spatial extent in epsg:4326 and reproject when no dedicated spatial extent for
+v1.9.0-rc12 (9th December 2024)
+===============================
+
+- Remove multiple location support from postgis driver and remove unnecessary logic copied from eodatasets3
+  (:pull:`1658`)
+- Documentation fixes (:pull:`1659`)
+- Don't use importlib_metadata (:pull:`1657`)
+- Pin upstream libraries to get CI tests running with numpy2 (:pull:`1661`)
+- Calculate spatial extent in epsg:4326 and reproject when no dedicated spatial extent for
   the requested CRS is available (:pull:`1662`)
-* Fix broken alembic migration (:pull:`1667`)
-* Fix broken documentation build (:pull:`1668`)
-* Rename `DatasetType` to `Product` in all the tests (:pull:`1671`)
-* Documentation updates for 1.9 release (:pull:`1664`, :pull:`1699`)
-* Fix metadata issues with new Lineage API. (:pull:`1679`)
-* Suppress annoying config warning when configuring by environment variable (:pull:`1680`)
-* Suppress internal deprecation warnings when running tests against deprecated code (:pull:`1681`)
-* Split index.abstract module into a package (:pull:`1682`)
+- Fix broken alembic migration (:pull:`1667`)
+- Fix broken documentation build (:pull:`1668`)
+- Rename `DatasetType` to `Product` in all the tests (:pull:`1671`)
+- Fix a bunch of typos and spelling mistakes (:pull:`1672`)
+- Documentation updates for 1.9 release (:pull:`1664`, :pull:`1669`)
+- Fix metadata issues with new Lineage API. (:pull:`1679`)
+- Suppress annoying config warning when configuring by environment variable (:pull:`1680`)
+- Suppress internal deprecation warnings when running tests against deprecated code (:pull:`1681`)
+- Split index.abstract module into a package (:pull:`1682`)
+- Cherry picks from 1.8 and prepare for 1.9.0-rc12 release (:pull:`1684`)
 
 v1.9.0-rc11 (28th October 2024)
 ===============================
