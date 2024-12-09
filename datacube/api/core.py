@@ -683,7 +683,7 @@ class Datacube:
         coords = numpy.asarray([coord for coord, _ in groups])
         data = numpy.empty(len(coords), dtype=object)
         for i, (_, dss) in enumerate(groups):
-            data[i] = list(dss)
+            data[i] = dss  # types: ignore[assignment]
 
         sources = xarray.DataArray(data,
                                    dims=[group_by.dimension],
