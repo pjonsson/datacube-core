@@ -8,6 +8,11 @@ What's New
 v1.9.next
 =========
 
+- Further metadata fix for new lineage API (:pull:`1690`) 
+
+v1.9.0-rc13 (16th December 2024)
+===============================
+
 - Update and cross-reference 1.8 to 1.9 migration notes (:pull:`1686`)
 - Fix SimpleDocNav lineage handling with PostGIS index (:pull:`1687`)
 - Update whats_new.rst for 1.9.0-r13 pre-release (:pull:`1689`)
