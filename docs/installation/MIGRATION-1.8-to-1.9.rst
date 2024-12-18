@@ -118,7 +118,7 @@ Major Changes between 1.8.x and 1.9.x
    The postgis driver uses Alembic for managing schema migrations, so future changes to the postgis database
    schema will be much easier to roll out than in the past.
 
-   See below for more `information about migrating to the Postgis index driver<#the-new-postgis-index-driver>`_.
+   See below for more information about migrating to the :ref:`The New Postgis Index Driver`.
 
    Note that many other libraries in the ODC ecosystem may not work well with the Postgis driver at first.
 
@@ -149,7 +149,7 @@ Major Changes between 1.8.x and 1.9.x
 8. Multiple locations per dataset is now deprecated, and is not supported by the ``postgis`` index driver.
 
 .. _`odc-geo`: https://github.com/opendatacube/odc-geo
-.. _`odc-loader`: https://github.com/opendatacube/odc-loader
+.. _`odc-loader`: https://github.com/opendatacube/odc-load
 
 The New Postgis Index Driver
 ----------------------------
