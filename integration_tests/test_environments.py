@@ -2,12 +2,13 @@
 #
 # Copyright (c) 2015-2025 ODC Contributors
 # SPDX-License-Identifier: Apache-2.0
-
+import pytest
 from datacube import Datacube
 from datacube.cfg import ODCConfig
 
 
-def test_multiple_environment_config(tmpdir):
+@pytest.mark.parametrize("driver", ["psycopg", "psycopg2"])
+def test_multiple_environment_config(tmpdir, driver: str):
     raw_config = """
 [DEFAULT]
 db_username: test_user

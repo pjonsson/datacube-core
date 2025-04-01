@@ -280,6 +280,8 @@ pluggy==1.5.0
     # via pytest
 psutil==7.0.0
     # via distributed
+psycopg==3.2.6
+    # via -r constraints.in
 psycopg2==2.9.10
     # via -r constraints.in
 pycodestyle==2.12.1
@@ -456,6 +458,7 @@ typing-extensions==4.13.0
     #   -r constraints.in
     #   alembic
     #   astroid
+    #   psycopg
     #   pygeoif
     #   referencing
     #   rich

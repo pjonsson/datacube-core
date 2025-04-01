@@ -230,7 +230,8 @@ class PostgresURLOptionHandler(ODCOptionHandler):
             return None
         components = urlparse(value)
         # Check URL scheme is postgresql:
-        if components.scheme != "postgresql" and not value.startswith("postgresql+psycopg2"):
+        if (components.scheme != "postgresql" and not value.startswith("postgresql+psycopg2://")
+                and not value.startswith("postgresql+psycopg://")):
             raise ConfigException("Database URL is not a postgresql connection URL")
         # Don't bother splitting up the url, we'd just have to put it back together again later
         return value

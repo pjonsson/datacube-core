@@ -40,6 +40,7 @@ odc-geo>=0.4.8
 pandas>=2.2.2
 # For Python 3.12 support
 pendulum>=3.0
+psycopg
 psycopg2
 pycodestyle
 # For Python 3.12 support

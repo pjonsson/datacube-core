@@ -106,6 +106,11 @@ def single_env_config():
 
 
 @pytest.fixture
+def single_env_config_psycopg3():
+    return mk_single_env_config("+psycopg")
+
+
+@pytest.fixture
 def single_env_config_no_connector():
     return mk_single_env_config("")
 
@@ -218,10 +223,11 @@ def test_invalid_option():
         handler = ODCOptionHandler("NO_CAPS", mockenv)
 
 
-def test_single_env(single_env_config, single_env_config_no_connector):
+def test_single_env(single_env_config, single_env_config_psycopg3, single_env_config_no_connector):
     from datacube.cfg import ODCConfig
     db_urls = []
     for cfg in [ODCConfig(text=single_env_config),
+                ODCConfig(text=single_env_config_psycopg3),
                 ODCConfig(text=single_env_config_no_connector)]:
         assert cfg['new'].index_driver == "postgis"
         db_urls.append(cfg['new'].db_url)
@@ -232,6 +238,7 @@ def test_single_env(single_env_config, single_env_config_no_connector):
         assert cfg['new'].db_iam_timeout == 600
         assert cfg['new']['db_connection_timeout'] == 60
     assert db_urls == ["postgresql+psycopg2://foo:bar@server.subdomain.domain/mytestdb",
+                       "postgresql+psycopg://foo:bar@server.subdomain.domain/mytestdb",
                        "postgresql://foo:bar@server.subdomain.domain/mytestdb"]
 
 
