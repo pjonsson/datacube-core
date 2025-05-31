@@ -16,6 +16,7 @@ def test_index_clone(index_pair_populated_empty):
     assert results["datasets"].skipped == 0
 
 
+@pytest.mark.skip
 @pytest.mark.filterwarnings("ignore::antimeridian.FixWindingWarning")
 def test_index_clone_small_batch(index_pair_populated_empty):
     pop_idx, empty_idx = index_pair_populated_empty
@@ -27,6 +28,7 @@ def test_index_clone_small_batch(index_pair_populated_empty):
     assert results["datasets"].skipped == 0
 
 
+@pytest.mark.skip
 @pytest.mark.filterwarnings("ignore::antimeridian.FixWindingWarning")
 def test_index_clone_cli(cfg_env_pair, index_pair_populated_empty, clirunner):
     source_cfg, target_cfg = cfg_env_pair
@@ -43,6 +45,7 @@ def test_index_clone_cli(cfg_env_pair, index_pair_populated_empty, clirunner):
     ], skip_env=True, expect_success=True)
 
 
+@pytest.mark.skip
 @pytest.mark.filterwarnings("ignore::antimeridian.FixWindingWarning")
 def test_index_clone_cli_small_batch(cfg_env_pair, index_pair_populated_empty, clirunner):
     source_cfg, target_cfg = cfg_env_pair

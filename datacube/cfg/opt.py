@@ -306,7 +306,7 @@ def psql_url_from_config(env: "ODCEnvironment"):
         return env.db_url
     if not env.db_database:
         raise ConfigException(f"No database name supplied for environment {env._name}")
-    url = "postgresql+psycopg2://"
+    url = "postgresql+psycopg://"
     if env.db_username:
         if env.db_password:
             escaped_password = quote_plus(env.db_password)

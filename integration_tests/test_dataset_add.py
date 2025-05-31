@@ -269,6 +269,8 @@ def test_dataset_add(dataset_add_configs, index_empty, clirunner):
     assert str(ds.id) in r.output
 
     r = clirunner(['dataset', 'info', '-f', 'yaml', '--show-sources', str(ds.id)])
+    print(f"dataset info -f yaml --show-sources {ds.id}")
+    print(r.output)
     assert str(ds.sources['ae'].id) in r.output
 
     r = clirunner(['dataset', 'info', '-f', 'yaml', '--show-derived', str(ds.sources['ae'].id)])

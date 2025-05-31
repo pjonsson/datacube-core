@@ -266,10 +266,10 @@ class PostGisDb:
         with self._engine.connect().execution_options(
                 isolation_level="AUTOCOMMIT"
         ) as connection:
-            try:
-                yield _api.PostgisDbAPI(self, connection)
-            finally:
-                connection.close()
+            #try:
+            yield _api.PostgisDbAPI(self, connection)
+            #finally:
+            #    connection.close()
 
     def _give_me_a_connection(self):
         # A Raw connection outside of the pool, caller is responsible for closing.

@@ -211,10 +211,10 @@ class PostgresDb:
         with self._engine.connect().execution_options(
                 isolation_level="AUTOCOMMIT"
         ) as connection:
-            try:
-                yield _api.PostgresDbAPI(connection)
-            finally:
-                connection.close()
+            #try:
+            yield _api.PostgresDbAPI(connection)
+            #finally:
+            #    connection.close()
 
     def give_me_a_connection(self):
         return self._engine.connect()

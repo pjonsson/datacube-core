@@ -1017,7 +1017,7 @@ def test_find_duplicates_with_time(index, nrt_dataset, final_dataset, ls8_eo3_da
 
     expected_result_old = [
         (
-            dupe_fields('090086', '("2023-04-30 23:50:33.884549","2023-04-30 23:50:34.884549")'),
+            dupe_fields('090086', ('2023-04-30 23:50:33.884549', '2023-04-30 23:50:34.884549')),
             {nrt_dataset.id, final_dataset.id}
         )
     ]
